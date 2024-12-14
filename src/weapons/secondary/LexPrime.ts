@@ -57,7 +57,7 @@ export class LexPrime extends Secondary {
                     max: 20,
                 },
                 multishot: 1.0,
-                reload: -1.0,
+                reload: 3.0,
                 statusChance: 44.0,
                 ips: {
                     impact: 400.0,
