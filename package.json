@@ -1,0 +1,24 @@
+{
+    "author": "@sharmavins23",
+    "description": "This project is an ambitious attempt to create an accurate damage calculator for\r the video game Warframe. While other [similar calculators](https://overframe.gg)\r exist, I feel they are strongly lacking in a series of primary features I\r appreciate:",
+    "devDependencies": {
+        "@types/node": "^22.10.2",
+        "cpx2": "^8.0.0",
+        "nodemon": "^3.1.9",
+        "rimraf": "^6.0.1",
+        "ts-loader": "^9.5.1",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.7.2",
+        "webpack": "^5.97.1",
+        "webpack-cli": "^5.1.4"
+    },
+    "license": "ISC",
+    "main": "index.js",
+    "name": "weapon-dps-statsim",
+    "scripts": {
+        "build": "webpack",
+        "clean": "rimraf dist",
+        "dev": "nodemon --watch public --watch src -e ts,html,css --exec \"npm run build\""
+    },
+    "version": "1.0.0"
+}

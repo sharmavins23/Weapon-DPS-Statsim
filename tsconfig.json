@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "baseUrl": "src",
+        "emitDecoratorMetadata": false,
+        "experimentalDecorators": true,
+        "forceConsistentCasingInFileNames": true,
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "outDir": "dist",
+        "paths": {
+            "@formats/*": ["formats/*"],
+            "@weapons/*": ["weapons/*"],
+            "@calc/*": ["calc/*"]
+        },
+        "rootDir": "src",
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "ESNext"
+    },
+    "exclude": ["dist", "node_modules"]
+}
