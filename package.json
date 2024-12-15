@@ -1,24 +1,36 @@
 {
     "author": "@sharmavins23",
+    "dependencies": {
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "lucide-react": "^0.468.0",
+        "next": "^15.1.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "tailwind-merge": "^2.5.5",
+        "tailwindcss-animate": "^1.0.7"
+    },
     "description": "This project is an ambitious attempt to create an accurate damage calculator for\r the video game Warframe. While other [similar calculators](https://overframe.gg)\r exist, I feel they are strongly lacking in a series of primary features I\r appreciate:",
     "devDependencies": {
-        "@types/node": "^22.10.2",
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "autoprefixer": "^10.4.20",
         "cpx2": "^8.0.0",
-        "nodemon": "^3.1.9",
+        "postcss": "^8",
         "rimraf": "^6.0.1",
-        "ts-loader": "^9.5.1",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.7.2",
-        "webpack": "^5.97.1",
-        "webpack-cli": "^5.1.4"
+        "tailwindcss": "^3.4.1",
+        "typescript": "^5"
     },
     "license": "ISC",
     "main": "index.js",
     "name": "weapon-dps-statsim",
     "scripts": {
-        "build": "webpack",
+        "build": "next build",
         "clean": "rimraf dist",
-        "dev": "nodemon --watch public --watch src -e ts,html,css --exec \"npm run build\""
+        "dev": "next dev --turbopack",
+        "lint": "next lint",
+        "start": "next start"
     },
     "version": "1.0.0"
 }

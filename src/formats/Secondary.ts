@@ -1,9 +1,9 @@
-import { Elements, IPS } from "@formats/Damage";
+import { Elements, IPS } from "formats/Damage";
 import {
     quantizeCritMultiplier,
     quantizeElements,
     quantizeIPS,
-} from "@calc/Quantization";
+} from "calc/Quantization";
 
 // ===== Type definitions ======================================================
 

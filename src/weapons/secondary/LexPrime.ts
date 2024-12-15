@@ -2,7 +2,7 @@ import {
     Secondary,
     SecondaryFiringModes,
     SecondaryStats,
-} from "@formats/Secondary";
+} from "formats/Secondary";
 
 export class LexPrime extends Secondary {
     stats: Partial<Record<SecondaryFiringModes, SecondaryStats>>;

@@ -1,4 +1,4 @@
-import { Elements, IPS } from "@formats/Damage";
+import { Elements, IPS } from "formats/Damage";
 
 export function quantizeIPS(
     ips: IPS,
