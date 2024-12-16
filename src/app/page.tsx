@@ -1,11 +1,11 @@
 "use client";
 
+import { runPrimarySimulation } from "@/calc/Primary";
 import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
@@ -22,54 +22,73 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
     NavigationMenu,
     NavigationMenuItem,
     NavigationMenuLink,
     NavigationMenuList,
     navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { HomeIcon, Moon, Sun, TrendingUp } from "lucide-react";
+import { Braton } from "@/data/weapons/primary/Braton";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { HomeIcon, Moon, RefreshCw, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { CartesianGrid, Dot, Line, LineChart } from "recharts";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { z } from "zod";
 
-const chartData = [
-    { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-    { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-    { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
-    { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-    { browser: "other", visitors: 90, fill: "var(--color-other)" },
-];
-
-const chartConfig = {
-    visitors: {
-        label: "Visitors",
-        color: "hsl(var(--chart-2))",
-    },
-    chrome: {
-        label: "Chrome",
-        color: "hsl(var(--chart-1))",
-    },
-    safari: {
-        label: "Safari",
-        color: "hsl(var(--chart-2))",
-    },
-    firefox: {
-        label: "Firefox",
-        color: "hsl(var(--chart-3))",
-    },
-    edge: {
-        label: "Edge",
-        color: "hsl(var(--chart-4))",
-    },
-    other: {
-        label: "Other",
-        color: "hsl(var(--chart-5))",
-    },
-} satisfies ChartConfig;
+const formSchema = z.object({
+    simulationTime: z.coerce.number().min(1).max(1_000),
+});
 
 export default function Home() {
     const { setTheme } = useTheme();
+
+    // Form data
+    const [formData, setFormData] = useState({
+        simulationTime: 10,
+    });
+
+    // Chart data
+    const [chartData, setChartData] = useState(
+        runPrimarySimulation(Braton, 10),
+    );
+    const chartConfig = {
+        damage: {
+            label: "Damage",
+            color: "hsl(var(--chart-1))",
+        },
+    } satisfies ChartConfig;
+
+    // Input form definition
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            simulationTime: 100,
+        },
+    });
+
+    // On submission of the form...
+    function onSubmit(values: z.infer<typeof formSchema>) {
+        // Update the form data
+        setFormData({
+            simulationTime: values.simulationTime,
+        });
+
+        // Re-run the simulation
+        setChartData(runPrimarySimulation(Braton, values.simulationTime));
+    }
 
     return (
         <div>
@@ -118,7 +137,7 @@ export default function Home() {
 
             {/* Main flexbox */}
             <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                {/* Showroom */}
+                {/* Header/information */}
                 <Card>
                     <CardHeader>
                         <CardTitle>
@@ -129,96 +148,141 @@ export default function Home() {
                             for Warframe.
                         </CardDescription>
                     </CardHeader>
+                    <CardContent>Currently in progress!</CardContent>
                 </Card>
 
-                {/* Simulator Knobs */}
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <Card className="flex-auto">
-                        <CardHeader>
-                            <CardTitle>Enemy Settings</CardTitle>
-                        </CardHeader>
-                        <CardContent>Haiiii</CardContent>
-                    </Card>
-                    <Card className="flex-auto">
-                        <CardHeader>
-                            <CardTitle>Level Scaling</CardTitle>
-                        </CardHeader>
-                        <CardContent>Helloooo</CardContent>
-                    </Card>
-                    <Card className="flex-auto">
-                        <CardHeader>
-                            <CardTitle>Simulator Options</CardTitle>
-                        </CardHeader>
-                        <CardContent>Hewwwooooo</CardContent>
-                    </Card>
-                </div>
-
-                {/* GunFax */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Weapon Overview</CardTitle>
-                    </CardHeader>
-                </Card>
-
-                {/* StatSim */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Inflicted DPS Simulation</CardTitle>
-                        <CardDescription>January - June 2024</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ChartContainer config={chartConfig}>
-                            <LineChart
-                                accessibilityLayer
-                                data={chartData}
-                                margin={{
-                                    top: 24,
-                                    left: 24,
-                                    right: 24,
-                                }}
-                            >
-                                <CartesianGrid vertical={false} />
-                                <ChartTooltip
-                                    cursor={false}
-                                    content={
-                                        <ChartTooltipContent
-                                            indicator="line"
-                                            nameKey="visitors"
-                                            hideLabel
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <div className="flex flex-1 flex-col gap-4 pt-0">
+                            {/* Simulator knobs */}
+                            <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+                                <Card className="flex-auto">
+                                    <CardHeader>
+                                        <CardTitle>Enemy Settings</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        To be implemented!
+                                    </CardContent>
+                                </Card>
+                                <Card className="flex-auto">
+                                    <CardHeader>
+                                        <CardTitle>Level Scaling</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        To be implemented!
+                                    </CardContent>
+                                </Card>
+                                <Card className="flex-auto">
+                                    <CardHeader>
+                                        <CardTitle>Simulator Options</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <FormField
+                                            control={form.control}
+                                            name="simulationTime"
+                                            render={({
+                                                field,
+                                            }: {
+                                                field: any;
+                                            }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        Simulation Runtime
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="10"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        Controls how long the
+                                                        simulation runs for.
+                                                        Don't set it too high!
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
                                         />
-                                    }
-                                />
-                                <Line
-                                    dataKey="visitors"
-                                    type="natural"
-                                    stroke="var(--color-visitors)"
-                                    strokeWidth={2}
-                                    dot={({ payload, ...props }) => {
-                                        return (
-                                            <Dot
-                                                key={payload.browser}
-                                                r={5}
-                                                cx={props.cx}
-                                                cy={props.cy}
-                                                fill={payload.fill}
-                                                stroke={payload.fill}
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Weapon modding/building */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Arsenal</CardTitle>
+                                </CardHeader>
+                                <CardContent>To be implemented!</CardContent>
+                            </Card>
+
+                            {/* StatSim */}
+                            <Card>
+                                <div className="flex flex-row">
+                                    <CardHeader>
+                                        <CardTitle>
+                                            Inflicted DPS Simulation
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Simulation run over{" "}
+                                            {formData.simulationTime} seconds
+                                        </CardDescription>
+                                        <Button type="submit">
+                                            <RefreshCw className="h-4 w-4" />
+                                            Re-run simulation
+                                        </Button>
+                                    </CardHeader>
+                                </div>
+                                <CardContent>
+                                    <ChartContainer config={chartConfig}>
+                                        <LineChart
+                                            accessibilityLayer
+                                            data={chartData}
+                                            margin={{
+                                                top: 24,
+                                                left: 24,
+                                                right: 24,
+                                            }}
+                                        >
+                                            <CartesianGrid vertical={false} />
+                                            <XAxis
+                                                className="transition-all"
+                                                dataKey="time"
+                                                tickLine={true}
+                                                tickMargin={10}
+                                                minTickGap={15}
                                             />
-                                        );
-                                    }}
-                                />
-                            </LineChart>
-                        </ChartContainer>
-                    </CardContent>
-                    <CardFooter className="flex-col items-start gap-2 text-sm">
-                        <div className="flex gap-2 font-medium leading-none">
-                            Trending up by 5.2% this month{" "}
-                            <TrendingUp className="h-4 w-4" />
+                                            <YAxis tickLine={true} />
+                                            <ChartTooltip
+                                                cursor={true}
+                                                content={
+                                                    <ChartTooltipContent
+                                                        indicator="line"
+                                                        nameKey="damage"
+                                                        labelFormatter={(
+                                                            label,
+                                                            payload,
+                                                        ) =>
+                                                            `${payload[0].payload.time.toFixed(2)} seconds`
+                                                        }
+                                                    />
+                                                }
+                                            />
+                                            <Line
+                                                dataKey="damage"
+                                                type="linear"
+                                                stroke="var(--color-damage)"
+                                                strokeWidth={2}
+                                                dot={false}
+                                            />
+                                        </LineChart>
+                                    </ChartContainer>
+                                </CardContent>
+                            </Card>
                         </div>
-                        <div className="leading-none text-muted-foreground">
-                            Showing total visitors for the last 6 months
-                        </div>
-                    </CardFooter>
-                </Card>
+                    </form>
+                </Form>
 
                 {/* SimFax */}
                 <Card>

@@ -25,22 +25,19 @@ wonderful front-end.
 
 # Project To-Dos
 
-## IMMEDIATE! Do before we leave!
-
-### UI side
-
-- Underneath, a section for simulation graph information (e.g. effective crit
-  rate, effective status rate, average damage inflicted per shot)
-
-### Non UI side
-
-- Make the sim
-
 ## Web UI
 
 - Change light/dark mode button to toggle
+- (Nit) soften the color of the text in parentheses in the title
+- Break up `page.tsx` to multiple files - Way too long!
+- Update the button with a loading spinner and darken the graph when loading the
+  simulation
 
 ## Features
+
+- Implement simulator
+- Separate graphing for "true damage" vs "attenuated damage", or maybe even some
+  other outputs? "Unmodified damage"?
 
 # License TL;DR
 
