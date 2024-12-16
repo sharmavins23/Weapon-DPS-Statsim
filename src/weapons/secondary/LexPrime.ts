@@ -1,8 +1,9 @@
+import { SimOutput } from "@/calc/SimOutput";
 import {
     Secondary,
     SecondaryFiringModes,
     SecondaryStats,
-} from "formats/Secondary";
+} from "@/formats/Secondary";
 
 export class LexPrime extends Secondary {
     stats: Partial<Record<SecondaryFiringModes, SecondaryStats>>;
@@ -80,7 +81,7 @@ export class LexPrime extends Secondary {
         };
     }
 
-    simulateDPS(enableQuantization: boolean = true): number {
+    simulateDPS(enableQuantization: boolean = true): SimOutput {
         // Get our stats
         let stats = {
             primary: this.stats[SecondaryFiringModes.PRIMARY]!,
@@ -89,26 +90,38 @@ export class LexPrime extends Secondary {
 
         let timestep = 0.01;
         let totalSimTime = 1_000_000.0;
-        let lastFiredTime = 0.0;
-        let reloadTriggeredTime = 0.0;
+        let lastFiredTime = -999.0;
+        let isRecoiling = false;
+        let reloadTriggeredTime = -999.0;
         let isReloading = false;
 
         let remainingAmmoInMag = stats.primary.magazine.size;
 
         let totalDamageDealt = 0.0;
         let totalNumberOfShots = 0;
+        let totalNumberOfCrits = 0;
 
-        // Simulate for 1,000 seconds
+        // Compute status effects
+        let statusEffects = [];
+
+        // Simulate for many seconds
         for (let time = 0.0; time < totalSimTime; time += timestep) {
+            // Skip if recoiling
+            if (isRecoiling) {
+                // If we're done recoiling, reset the flag
+                if (time - lastFiredTime >= 1.0 / stats.primary.fireRate) {
+                    isRecoiling = false;
+                }
+                continue;
+            }
+
             // Skip if reloading
             if (isReloading) {
                 // If we're done reloading, reset the flag
                 if (time - reloadTriggeredTime >= stats.primary.reload) {
                     isReloading = false;
                     remainingAmmoInMag = stats.primary.magazine.size;
-                }
-                // Either way, move on
-                continue;
+                } else continue;
             }
 
             // If we're out of ammo, trigger reload
@@ -119,22 +132,32 @@ export class LexPrime extends Secondary {
             }
 
             // If we can fire, fire!
-            if (time - lastFiredTime >= 1.0 / stats.primary.fireRate) {
+            if (!isRecoiling && !isReloading) {
                 // Fire the primary
-                totalDamageDealt += this.calculateRawDamagePerShot(
+                let rawDamageOnShot = this.calculateRawDamagePerShot(
                     SecondaryFiringModes.PRIMARY,
                     enableQuantization
                 );
+                totalDamageDealt += rawDamageOnShot.damage;
                 totalNumberOfShots++;
+                totalNumberOfCrits += rawDamageOnShot.isCrit ? 1 : 0;
 
                 // Update last fired time
                 lastFiredTime = time;
+
+                // Start recoiling
+                isRecoiling = true;
 
                 // Reduce ammo
                 remainingAmmoInMag -= stats.primary.magazine.cost;
             }
         }
 
-        return totalDamageDealt / totalSimTime;
+        return {
+            dps: totalDamageDealt / totalSimTime,
+            shotCount: totalNumberOfShots,
+            averageDamagePerShot: totalDamageDealt / totalNumberOfShots,
+            effectiveCritRate: totalNumberOfCrits / totalNumberOfShots,
+        };
     }
 }

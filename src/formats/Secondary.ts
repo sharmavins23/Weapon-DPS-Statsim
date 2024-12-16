@@ -1,9 +1,10 @@
-import { Elements, IPS } from "formats/Damage";
+import { Elements, IPS } from "@/formats/Damage";
 import {
     quantizeCritMultiplier,
     quantizeElements,
     quantizeIPS,
-} from "calc/Quantization";
+} from "@/calc/Quantization";
+import { SimOutput, ShotOutput } from "@/calc/SimOutput";
 
 // ===== Type definitions ======================================================
 
@@ -44,7 +45,7 @@ export abstract class Secondary {
     calculateRawDamagePerShot(
         mode: SecondaryFiringModes = SecondaryFiringModes.PRIMARY,
         enableQuantization: boolean = true
-    ): number {
+    ): ShotOutput {
         // * Get the stats
         if (!this.stats[mode]) throw new Error("Invalid firing mode");
         let stats: SecondaryStats = this.stats[mode]!;
@@ -81,17 +82,25 @@ export abstract class Secondary {
 
         // * Apply other multipliers
         // Critical hits
-        let totalCritChance = stats.critical.chance / 100.0;
+        let critHundredsValue = Math.floor(stats.critical.chance / 100.0);
+        let critRemainder = stats.critical.chance % 100.0;
+        let isHightierCrit = Math.random() < critRemainder / 100.0;
+        let critMulti;
+        if (isHightierCrit)
+            critMulti = stats.critical.multiplier * (critHundredsValue + 1);
+        else critMulti = stats.critical.multiplier * critHundredsValue;
         let quantizedCritMulti = quantizeCritMultiplier(
-            stats.critical.multiplier,
+            critMulti,
             enableQuantization
         );
         let totalCritMulti = quantizedCritMulti;
-        let avgCritMulti = 1 + totalCritChance * (totalCritMulti - 1);
-        totalDamage *= avgCritMulti;
+        if (isHightierCrit) totalDamage *= totalCritMulti;
 
-        return totalDamage;
+        return {
+            damage: totalDamage,
+            isCrit: isHightierCrit,
+        };
     }
 
-    abstract simulateDPS(enableQuantization: boolean): number;
+    abstract simulateDPS(enableQuantization: boolean): SimOutput;
 }
