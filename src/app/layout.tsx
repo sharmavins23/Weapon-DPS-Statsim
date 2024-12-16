@@ -1,5 +1,5 @@
-import { ThemeProvider } from "@/components/theme-provider";
 import "@/app/globals.css"; // Import global styles
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata = {
     title: "Next.js",

@@ -1,0 +1,17 @@
+{
+    "arrowParens": "always",
+    "bracketSameLine": false,
+    "bracketSpacing": true,
+    "embeddedLanguageFormatting": "auto",
+    "jsxSingleQuote": false,
+    "plugins": ["prettier-plugin-organize-imports"],
+    "printWidth": 80,
+    "proseWrap": "always",
+    "quoteProps": "as-needed",
+    "semi": true,
+    "singleAttributePerLine": false,
+    "singleQuote": false,
+    "tabWidth": 4,
+    "trailingComma": "all",
+    "useTabs": false
+}

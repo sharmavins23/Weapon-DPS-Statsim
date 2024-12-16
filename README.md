@@ -5,13 +5,13 @@ the video game Warframe. While other [similar calculators](https://overframe.gg)
 exist, I feel they are strongly lacking in a series of primary features I
 appreciate:
 
--   They have bugs that hinder simple computations, or otherwise don't implement
-    simple features that are useful (e.g. Cascadia Flare);
--   They don't simulate status effects, making the computed results extremely
-    biased;
--   They do not simulate different environments that are more realistic, opting
-    to simplify the computation whenever needed in favor of a quick (but more
-    worthless) user experience.
+- They have bugs that hinder simple computations, or otherwise don't implement
+  simple features that are useful (e.g. Cascadia Flare);
+- They don't simulate status effects, making the computed results extremely
+  biased;
+- They do not simulate different environments that are more realistic, opting to
+  simplify the computation whenever needed in favor of a quick (but more
+  worthless) user experience.
 
 This project aims to solve all of these issues while providing a (code-first!)
 implementation. It's heavily inspired by other damage calculators like
@@ -23,27 +23,24 @@ as well.
 Credit to [@AndrewJones-PSU](https://github.com/AndrewJones-PSU) for the
 wonderful front-end.
 
-# Project To-Do
+# Project To-Dos
 
--   Implement mods, and adding modding
--   Implement arcanes, and adding arcanes
--   Implement incarnon upgrades
--   Other custom settings (e.g. Enable or disable quantization, adding other
-    buffs like crit)
--   Update DPS calculator to add incarnon support (swapping when ready)
--   Implement status effect calculation in simulation
--   Add multiple-weapon switching
--   Add targeting types
-    -   Single-target: Computes damage against one particular enemy.
-    -   Line-target: Computes damage against 4 enemies, in a line (with 1m
-        spacing. This allows punchthrough to be calculated as the valuable stat
-        it is)
-    -   Multi-target: Computes damage against a group of 20 enemies, all evenly
-        spaced in a 4x5m grid.
--   Add enemy types
-    -   We can just go based on the faction battlegroups for these, and take
-        averages
-    -   Or we can addd particular enemies. Or both.
+## IMMEDIATE! Do before we leave!
+
+### UI side
+
+- Underneath, a section for simulation graph information (e.g. effective crit
+  rate, effective status rate, average damage inflicted per shot)
+
+### Non UI side
+
+- Make the sim
+
+## Web UI
+
+- Change light/dark mode button to toggle
+
+## Features
 
 # License TL;DR
 
@@ -56,26 +53,24 @@ copyright and license notice in any copy of this software/source.
 
 ## What you CAN do:
 
--   You may commercially use this project in any way, and profit off it or the
-    code included in any way;
--   You may modify or make changes to this project in any way;
--   You may distribute this project, the compiled code, or its source in any
-    way;
--   You may incorporate this work into something that has a more restrictive
-    license in any way;
--   And you may use the work for private use.
+- You may commercially use this project in any way, and profit off it or the
+  code included in any way;
+- You may modify or make changes to this project in any way;
+- You may distribute this project, the compiled code, or its source in any way;
+- You may incorporate this work into something that has a more restrictive
+  license in any way;
+- And you may use the work for private use.
 
 ## What you CANNOT do:
 
--   You may not hold me (the author) liable for anything that happens to this
-    code as well as anything that this code accomplishes. The work is provided
-    as-is.
+- You may not hold me (the author) liable for anything that happens to this code
+  as well as anything that this code accomplishes. The work is provided as-is.
 
 ## What you MUST do:
 
--   You must include the copyright notice in all copies or substantial uses of
-    the work;
--   You must include the license notice in all copies or substantial uses of the
-    work.
+- You must include the copyright notice in all copies or substantial uses of the
+  work;
+- You must include the license notice in all copies or substantial uses of the
+  work.
 
 If you're feeling generous, give credit to me somewhere in your projects.
