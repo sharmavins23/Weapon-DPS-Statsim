@@ -173,7 +173,6 @@ export default function Home() {
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        l{" "}
                         <div className="flex flex-1 flex-col gap-4 pt-0">
                             {/* Simulator knobs */}
                             <div className="grid auto-rows-min gap-4 md:grid-cols-3">
