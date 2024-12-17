@@ -50,6 +50,7 @@ import { z } from "zod";
 
 const formSchema = z.object({
     simulationTime: z.coerce.number().min(1).max(1_000),
+    timeResolution: z.coerce.number().min(0.0001).max(1),
 });
 
 export default function Home() {
@@ -58,16 +59,24 @@ export default function Home() {
     // Form data
     const [formData, setFormData] = useState({
         simulationTime: 10,
+        timeResolution: 0.01,
     });
 
     // Chart data
-    const [chartData, setChartData] = useState(
-        runPrimarySimulation(Braton, 10),
+    const [simOutput, setSimOutput] = useState(
+        runPrimarySimulation(Braton, {
+            simulationTime: 10,
+            timeResolution: 0.01,
+        }),
     );
     const chartConfig = {
         damage: {
-            label: "Damage",
+            label: "TickDamage",
             color: "hsl(var(--chart-1))",
+        },
+        cumulative: {
+            label: "Damage",
+            color: "hsl(var(--chart-2))",
         },
     } satisfies ChartConfig;
 
@@ -75,19 +84,30 @@ export default function Home() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            simulationTime: 100,
+            simulationTime: 10,
+            timeResolution: 0.01,
         },
     });
 
     // On submission of the form...
     function onSubmit(values: z.infer<typeof formSchema>) {
+        console.log(values);
         // Update the form data
         setFormData({
             simulationTime: values.simulationTime,
+            timeResolution: values.timeResolution,
         });
+    }
 
+    // On button press...
+    function onSubmitButton() {
         // Re-run the simulation
-        setChartData(runPrimarySimulation(Braton, values.simulationTime));
+        setSimOutput(
+            runPrimarySimulation(Braton, {
+                simulationTime: formData.simulationTime,
+                timeResolution: formData.timeResolution,
+            }),
+        );
     }
 
     return (
@@ -153,6 +173,7 @@ export default function Home() {
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
+                        l{" "}
                         <div className="flex flex-1 flex-col gap-4 pt-0">
                             {/* Simulator knobs */}
                             <div className="grid auto-rows-min gap-4 md:grid-cols-3">
@@ -205,6 +226,35 @@ export default function Home() {
                                                 </FormItem>
                                             )}
                                         />
+                                        <FormField
+                                            control={form.control}
+                                            name="timeResolution"
+                                            render={({
+                                                field,
+                                            }: {
+                                                field: any;
+                                            }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        Simulation Resolution
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="0.01"
+                                                            step={0.01}
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        Controls the time
+                                                        between ticks. Don't set
+                                                        it too low.
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     </CardContent>
                                 </Card>
                             </div>
@@ -226,9 +276,20 @@ export default function Home() {
                                         </CardTitle>
                                         <CardDescription>
                                             Simulation run over{" "}
-                                            {formData.simulationTime} seconds
+                                            <b>{simOutput.metadata.time} </b>
+                                            seconds, with{" "}
+                                            <b>
+                                                {
+                                                    simOutput.metadata
+                                                        .timeResolution
+                                                }{" "}
+                                            </b>{" "}
+                                            seconds between ticks
                                         </CardDescription>
-                                        <Button type="submit">
+                                        <Button
+                                            type="submit"
+                                            onClick={onSubmitButton}
+                                        >
                                             <RefreshCw className="h-4 w-4" />
                                             Re-run simulation
                                         </Button>
@@ -238,7 +299,7 @@ export default function Home() {
                                     <ChartContainer config={chartConfig}>
                                         <LineChart
                                             accessibilityLayer
-                                            data={chartData}
+                                            data={simOutput.data}
                                             margin={{
                                                 top: 24,
                                                 left: 24,
@@ -259,7 +320,7 @@ export default function Home() {
                                                 content={
                                                     <ChartTooltipContent
                                                         indicator="line"
-                                                        nameKey="damage"
+                                                        nameKey="cumulative"
                                                         labelFormatter={(
                                                             label,
                                                             payload,
@@ -270,9 +331,9 @@ export default function Home() {
                                                 }
                                             />
                                             <Line
-                                                dataKey="damage"
+                                                dataKey="cumulative"
                                                 type="linear"
-                                                stroke="var(--color-damage)"
+                                                stroke="var(--color-cumulative)"
                                                 strokeWidth={2}
                                                 dot={false}
                                             />
@@ -289,7 +350,22 @@ export default function Home() {
                     <CardHeader>
                         <CardTitle>Simulator metadata</CardTitle>
                     </CardHeader>
-                    <CardContent>Lorem ipsum</CardContent>
+                    <CardContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        {simOutput.metadata.DPS.toFixed(3)} DPS
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <CardDescription>
+                                        Damage per second (averaged)
+                                    </CardDescription>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
         </div>
