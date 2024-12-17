@@ -1,6 +1,7 @@
 "use client";
 
-import { SimOutput, runPrimarySimulation } from "@/calc/Primary";
+import { runPrimarySimulation } from "@/calc/Primary";
+import { SimOutput } from "@/calc/SimTypes";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -47,6 +48,11 @@ const formSchema = z.object({
     timeResolution: z.coerce.number().min(0.000_1).max(1),
 });
 
+const formDefaults = {
+    simulationTime: 60,
+    timeResolution: 0.005,
+};
+
 export default function Home() {
     const { theme, setTheme } = useTheme();
 
@@ -55,8 +61,8 @@ export default function Home() {
 
     // Form data
     const [formData, setFormData] = useState({
-        simulationTime: 10,
-        timeResolution: 0.01,
+        simulationTime: formDefaults.simulationTime,
+        timeResolution: formDefaults.timeResolution,
     });
 
     // Chart data
@@ -77,8 +83,8 @@ export default function Home() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            simulationTime: 10,
-            timeResolution: 0.01,
+            simulationTime: formDefaults.simulationTime,
+            timeResolution: formDefaults.timeResolution,
         },
     });
 
@@ -91,9 +97,14 @@ export default function Home() {
         });
     }
 
+    // Used for running the simulation client-side
     useEffect(() => {
+        setSimOutput(null);
+
         setIsLoadingSim(true);
+        // Queue the page loading spinner to show BEFORE the simulation runs
         setTimeout(async () => {
+            // Simulation runs asynchronously, not hanging the browser
             setSimOutput(
                 await runPrimarySimulation(Braton, {
                     simulationTime: formData.simulationTime,
@@ -202,7 +213,7 @@ export default function Home() {
                                                     <FormControl>
                                                         <Input
                                                             type="number"
-                                                            placeholder="10"
+                                                            placeholder={formDefaults.simulationTime.toString()}
                                                             {...field}
                                                         />
                                                     </FormControl>
@@ -230,8 +241,8 @@ export default function Home() {
                                                     <FormControl>
                                                         <Input
                                                             type="number"
-                                                            placeholder="0.01"
-                                                            step={0.01}
+                                                            placeholder={formDefaults.timeResolution.toString()}
+                                                            step={0.001}
                                                             {...field}
                                                         />
                                                     </FormControl>
@@ -253,7 +264,18 @@ export default function Home() {
                                 <CardHeader>
                                     <CardTitle>Arsenal</CardTitle>
                                 </CardHeader>
-                                <CardContent>To be implemented!</CardContent>
+                                <CardContent>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle>Weapon</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                Some Selector Here
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </CardContent>
                             </Card>
 
                             {/* StatSim */}
@@ -400,6 +422,57 @@ export default function Home() {
                                 <CardContent>
                                     <CardDescription>
                                         Effective critical hit rate
+                                    </CardDescription>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        {simOutput
+                                            ? simOutput.metadata.effectiveStatusRate.toFixed(
+                                                  3,
+                                              )
+                                            : 0.0}
+                                        %
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <CardDescription>
+                                        Effective status chance
+                                    </CardDescription>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        {simOutput
+                                            ? simOutput.metadata.numStatusProcs.toFixed(
+                                                  0,
+                                              )
+                                            : 0}{" "}
+                                        status procs
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <CardDescription>
+                                        Number of slash procs applied
+                                    </CardDescription>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        {simOutput
+                                            ? simOutput.metadata.numSlashTicks.toFixed(
+                                                  0,
+                                              )
+                                            : 0}{" "}
+                                        bleed ticks
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <CardDescription>
+                                        Number of ticks of bleed (slash) damage
                                     </CardDescription>
                                 </CardContent>
                             </Card>

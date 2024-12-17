@@ -1,66 +1,16 @@
+import {
+    ISimOutput,
+    ISimParams,
+    ISimStack,
+    SimDataPoint,
+    SimInput,
+    SimOutput,
+    iSingleBulletDamageOutput,
+} from "@/calc/SimTypes";
+import { calculateSlashProcBleedDamage, iSlashProc } from "@/calc/status/Slash";
+import { getRandomStatusProc } from "@/calc/status/Status";
+import { calculateToxinProcDamage, iToxinProc } from "@/calc/status/Toxin";
 import { PrimaryWeapon } from "@/data/weapons/primary/PrimaryWeapon";
-
-// ===== Exported enumerations =================================================
-
-// Input data for the simulation
-export interface SimInput {
-    simulationTime: number; // Total time of the simulation
-    timeResolution: number; // Seconds per tick
-}
-
-// Singular data point from the simulation.
-export interface SimDataPoint {
-    time: number;
-    damage: number;
-    cumulative: number;
-}
-
-// Output metadata (calculated)
-export interface SimMetadata {
-    simulationTime: number; // Total time of the simulation
-    timeResolution: number; // Seconds per tick
-
-    DPS: number; // Damage per second
-    damagePerShot: number; // Average damage per shot
-    effectiveCritRate: number; // Effective critical hit rate
-}
-
-// Overall output from the sim. Consumed by front-end.
-export interface SimOutput {
-    data: SimDataPoint[];
-    metadata: SimMetadata;
-}
-
-// Passed-in parameters won't change between ticks
-interface ISimParams {}
-
-// Internal data (reference) that may change between ticks
-interface ISimStack {
-    isReloading: boolean; // Reloading after last shot
-    lastReloadTime: number; // Time of last reload
-
-    isRecoiling: boolean; // Recoil after last shot
-    lastRecoilTime: number; // Time of last recoil
-
-    ammoInMagazine: number; // Bullets left in magazine
-}
-
-// Internal to the function, used for passing the (reference) data between ticks
-interface ISimOutput {
-    data: SimDataPoint;
-    stack: ISimStack;
-
-    isShot: boolean;
-    isCrit: boolean;
-}
-
-interface iSingleBulletDamageOutput {
-    damage: number;
-
-    isCrit: boolean;
-}
-
-// ===== Damage calculation ====================================================
 
 function calculateSingleBulletDamage(
     weapon: PrimaryWeapon,
@@ -161,8 +111,6 @@ function calculateSingleBulletDamage(
     };
 }
 
-// ===== Simulation functions ==================================================
-
 function runSingleTick(
     weapon: PrimaryWeapon,
     time: number,
@@ -173,11 +121,81 @@ function runSingleTick(
     let newStack = { ...stack };
 
     // Flags for tracking
-    let isShot = false;
-    let isCrit = false;
+    let numShots = 0;
+    let numCrits = 0;
+    let numStatuses = 0;
+    let numSlashTicks = 0;
 
     // Keep track of the damage we inflicted this tick
     let totalDamageInflictedThisTick = 0;
+
+    // STATUSES!
+    if (stack.procs.slash.length > 0) {
+        let newSlashProcs: iSlashProc[] = [];
+
+        // Iterate through all of the procs
+        for (let i = 0; i < stack.procs.slash.length; i++) {
+            // Get the proc
+            let proc = stack.procs.slash[i];
+            // Check if the proc has 0 ticks
+            if (proc.ticks <= 0) {
+                // Skip this proc
+                continue;
+            }
+            // Check if the proc has hit a damage tick
+            else if (time - proc.time >= 1.0) {
+                // Deal the damage
+                totalDamageInflictedThisTick += proc.damage;
+                // Decrement the ticks
+                proc.ticks -= 1;
+                // Update the time
+                proc.time = time;
+                // Count it
+                numSlashTicks += 1;
+
+                // Add it to the new list
+                newSlashProcs.push(proc);
+            } else {
+                // Otherwise, keep the proc
+                newSlashProcs.push(proc);
+            }
+        }
+
+        // Update the stack
+        newStack.procs.slash = newSlashProcs;
+    }
+    if (stack.procs.toxin.length > 0) {
+        let newToxinProcs: iToxinProc[] = [];
+
+        // Iterate through all of the procs
+        for (let i = 0; i < stack.procs.toxin.length; i++) {
+            // Get the proc
+            let proc = stack.procs.toxin[i];
+            // Check if the proc has 0 ticks
+            if (proc.ticks <= 0) {
+                // Skip this proc
+                continue;
+            }
+            // Check if the proc has hit a damage tick
+            else if (time - proc.time >= 1.0) {
+                // Deal the damage
+                totalDamageInflictedThisTick += proc.damage;
+                // Decrement the ticks
+                proc.ticks -= 1;
+                // Update the time
+                proc.time = time;
+
+                // Add it to the new list
+                newToxinProcs.push(proc);
+            } else {
+                // Otherwise, keep the proc
+                newToxinProcs.push(proc);
+            }
+        }
+
+        // Update the stack
+        newStack.procs.toxin = newToxinProcs;
+    }
 
     // If we're recoiling from the last shot, we can't shoot or reload
     if (stack.isRecoiling) {
@@ -217,13 +235,48 @@ function runSingleTick(
         newStack.ammoInMagazine -= 1;
 
         // Increase the damage dealt
-        let singleBulletDamage = calculateSingleBulletDamage(weapon);
-        let totalShotDamage = singleBulletDamage.damage * weapon.multishot;
-        totalDamageInflictedThisTick += totalShotDamage;
+        let numberOfBullets = Math.floor(weapon.multishot);
+        let multishotRemainder = weapon.multishot - numberOfBullets;
+        if (Math.random() < multishotRemainder) {
+            numberOfBullets += 1;
+        }
+        numShots = numberOfBullets;
+        // Each shot independently rolls for crits
+        for (let i = 0; i < numberOfBullets; i++) {
+            let singleBulletDamage = calculateSingleBulletDamage(weapon);
+            if (singleBulletDamage.isCrit) numCrits += 1;
+            totalDamageInflictedThisTick += singleBulletDamage.damage;
 
-        // Update some counters
-        isShot = true;
-        isCrit = singleBulletDamage.isCrit;
+            // Roll for status procs
+            let statusProcChance = weapon.statusChance / 100.0;
+            let numStatusProcs = Math.floor(statusProcChance);
+            let procChanceRemainder = statusProcChance - numStatusProcs;
+            if (Math.random() < procChanceRemainder) {
+                numStatusProcs += 1;
+            }
+            // We roll for each status proc individually
+            for (let i = 0; i < numStatusProcs; i++) {
+                // Get the proc
+                let statusChosen = getRandomStatusProc(weapon.damage);
+
+                if (statusChosen === "slash") {
+                    newStack.procs.slash.push({
+                        damage: calculateSlashProcBleedDamage(weapon),
+                        ticks: 6,
+                        time: time,
+                    });
+                } else if (statusChosen === "toxin") {
+                    newStack.procs.toxin.push({
+                        damage: calculateToxinProcDamage(weapon),
+                        ticks: 6,
+                        time: time,
+                    });
+                }
+
+                // Count the status application
+                numStatuses += 1;
+            }
+        }
     }
 
     // Handle any other weird edge cases
@@ -240,8 +293,10 @@ function runSingleTick(
             cumulative: previous.cumulative + totalDamageInflictedThisTick,
         },
         stack: newStack,
-        isShot: isShot,
-        isCrit: isCrit,
+        numShots: numShots,
+        numCrits: numCrits,
+        numStatuses: numStatuses,
+        numSlashTicks: numSlashTicks,
     };
 }
 
@@ -253,7 +308,6 @@ export async function runPrimarySimulation(
 
     // Prepare our objects for the simulation
     let data: SimDataPoint[] = [];
-    let stacks: ISimStack[] = [];
     let params: ISimParams = {};
     let stack: ISimStack = {
         isReloading: false,
@@ -263,11 +317,18 @@ export async function runPrimarySimulation(
         lastRecoilTime: 0.0,
 
         ammoInMagazine: weapon.ammo.magazineSize,
+
+        procs: {
+            slash: [],
+            toxin: [],
+        },
     };
 
     // Prepare our counters for metadata
     let numShots = 0;
     let numCrits = 0;
+    let numStatuses = 0;
+    let numSlashTicks = 0;
 
     // Initialize the simulation with a null datapoint
     let previousData: SimDataPoint = {
@@ -288,16 +349,12 @@ export async function runPrimarySimulation(
         );
         // Save the datapoint
         data.push(output.data);
-        // Save the stack
-        stacks.push(stack);
 
         // Update some counters that we use
-        if (output.isShot) {
-            numShots += 1;
-        }
-        if (output.isCrit) {
-            numCrits += 1;
-        }
+        numShots += output.numShots;
+        numCrits += output.numCrits;
+        numStatuses += output.numStatuses;
+        numSlashTicks += output.numSlashTicks;
 
         // Propagate this tick's output data to the next tick
         previousData = output.data;
@@ -315,6 +372,9 @@ export async function runPrimarySimulation(
             DPS: data[data.length - 1].cumulative / input.simulationTime,
             damagePerShot: data[data.length - 1].cumulative / numShots,
             effectiveCritRate: (numCrits / numShots) * 100.0,
+            effectiveStatusRate: (numStatuses / numShots) * 100.0,
+            numStatusProcs: numStatuses,
+            numSlashTicks: numSlashTicks,
         },
     };
 }

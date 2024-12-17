@@ -27,18 +27,20 @@ wonderful front-end.
 
 ## Web UI
 
-- Break up `page.tsx` to multiple files - Way too long!
+- Add UI icons for Warframe damage types!
+- Add more simulation printouts and potentially refactor how printouts look.
 
 ## Features
 
-- Add in status effect handling (and simulation!)
-- Add enemies and armor/health scaling for enemies
 - Add mods
+- Add enemies and armor/health scaling for enemies
 - Add arcanes
 - Add incarnons
 - Add other weapons (secondaries, melee)
 - Separate graphing for "true damage" vs "attenuated damage", or maybe even some
   other outputs? "Unmodified damage"?
+    - Also, separate printouts for what damage is coming from where. E.g. weapon
+      damage vs status damage (by proc type!)
 
 # License TL;DR
 
