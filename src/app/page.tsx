@@ -276,7 +276,12 @@ export default function Home() {
                                         </CardTitle>
                                         <CardDescription>
                                             Simulation run over{" "}
-                                            <b>{simOutput.metadata.time} </b>
+                                            <b>
+                                                {
+                                                    simOutput.metadata
+                                                        .simulationTime
+                                                }{" "}
+                                            </b>
                                             seconds, with{" "}
                                             <b>
                                                 {

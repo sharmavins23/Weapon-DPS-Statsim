@@ -17,7 +17,7 @@ export interface SimDataPoint {
 
 // Output metadata (calculated)
 export interface SimMetadata {
-    time: number; // Total time of the simulation
+    simulationTime: number; // Total time of the simulation
     timeResolution: number; // Seconds per tick
 
     DPS: number; // Damage per second
@@ -47,6 +47,102 @@ interface ISimStack {
 interface ISimOutput {
     data: SimDataPoint;
     stack: ISimStack;
+}
+
+// ===== Damage calculation ====================================================
+
+function calculateSingleBulletDamage(weapon: PrimaryWeapon): number {
+    // * Compute quantization factor (scale)
+    let baseIPS =
+        weapon.damage.impact + weapon.damage.puncture + weapon.damage.slash;
+    let quantizationFactor = baseIPS / 16.0; // Quantization factor
+
+    // * Quantize elements
+    let quantizedDamage = {
+        impact:
+            Math.round(weapon.damage.impact / quantizationFactor) *
+            quantizationFactor,
+        puncture:
+            Math.round(weapon.damage.puncture / quantizationFactor) *
+            quantizationFactor,
+        slash:
+            Math.round(weapon.damage.slash / quantizationFactor) *
+            quantizationFactor,
+
+        heat:
+            Math.round(weapon.damage.heat / quantizationFactor) *
+            quantizationFactor,
+        cold:
+            Math.round(weapon.damage.cold / quantizationFactor) *
+            quantizationFactor,
+        electricity:
+            Math.round(weapon.damage.electricity / quantizationFactor) *
+            quantizationFactor,
+        toxin:
+            Math.round(weapon.damage.toxin / quantizationFactor) *
+            quantizationFactor,
+
+        blast:
+            Math.round(weapon.damage.blast / quantizationFactor) *
+            quantizationFactor,
+        radiation:
+            Math.round(weapon.damage.radiation / quantizationFactor) *
+            quantizationFactor,
+        gas:
+            Math.round(weapon.damage.gas / quantizationFactor) *
+            quantizationFactor,
+        magnetic:
+            Math.round(weapon.damage.magnetic / quantizationFactor) *
+            quantizationFactor,
+        viral:
+            Math.round(weapon.damage.viral / quantizationFactor) *
+            quantizationFactor,
+        corrosive:
+            Math.round(weapon.damage.corrosive / quantizationFactor) *
+            quantizationFactor,
+    };
+
+    // * Sum quantized values
+    let totalDamage =
+        quantizedDamage.impact +
+        quantizedDamage.puncture +
+        quantizedDamage.slash +
+        quantizedDamage.heat +
+        quantizedDamage.cold +
+        quantizedDamage.electricity +
+        quantizedDamage.toxin +
+        quantizedDamage.blast +
+        quantizedDamage.radiation +
+        quantizedDamage.gas +
+        quantizedDamage.magnetic +
+        quantizedDamage.viral +
+        quantizedDamage.corrosive;
+
+    // * Apply critical hits
+    let criticalChanceDecimal = weapon.critical.chance / 100.0;
+    // Handle super crits (yellow, orange, red crits)
+    let criticalChanceDecimalOnesPlace = Math.floor(criticalChanceDecimal);
+    let criticalChanceDecimalRemainder =
+        criticalChanceDecimal - criticalChanceDecimalOnesPlace;
+    let isHigherCrit = Math.random() < criticalChanceDecimalRemainder;
+    // Calculate the multiplier
+    let criticalMultiplier = weapon.critical.multiplier;
+    if (isHigherCrit) {
+        criticalMultiplier *= criticalChanceDecimalOnesPlace + 1;
+    } else {
+        criticalMultiplier *= criticalChanceDecimalOnesPlace;
+    }
+    // Quantize the critical multiplier
+    let quantizedCriticalMultiplier =
+        Math.round(criticalMultiplier / (32.0 / 4095.0)) * (32.0 / 4095.0);
+    // Apply the multiplier to the total damage
+    totalDamage *= Math.max(
+        quantizedCriticalMultiplier,
+        // (Ignoring bugs) crits may never subtract damage
+        1.0,
+    );
+
+    return totalDamage;
 }
 
 // ===== Simulation functions ==================================================
@@ -101,7 +197,9 @@ function runSingleTick(
         newStack.ammoInMagazine -= 1;
 
         // Increase the damage dealt
-        totalDamageInflictedThisTick += weapon.damage.impact; // TODO: Calculate
+        let singleBulletDamage = calculateSingleBulletDamage(weapon);
+        let totalShotDamage = singleBulletDamage * weapon.multishot;
+        totalDamageInflictedThisTick += totalShotDamage;
     }
 
     // Handle any other weird edge cases
@@ -169,7 +267,7 @@ export function runPrimarySimulation(
     return {
         data: data,
         metadata: {
-            time: input.simulationTime,
+            simulationTime: input.simulationTime,
             timeResolution: input.timeResolution,
 
             DPS: data[data.length - 1].cumulative / input.simulationTime,
