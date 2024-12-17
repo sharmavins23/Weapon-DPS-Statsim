@@ -476,6 +476,23 @@ export default function Home() {
                                     </CardDescription>
                                 </CardContent>
                             </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        {simOutput
+                                            ? simOutput.metadata.numToxinTicks.toFixed(
+                                                  0,
+                                              )
+                                            : 0}{" "}
+                                        toxin ticks
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <CardDescription>
+                                        Number of ticks of toxin status damage
+                                    </CardDescription>
+                                </CardContent>
+                            </Card>
                         </div>
                     </CardContent>
                 </Card>

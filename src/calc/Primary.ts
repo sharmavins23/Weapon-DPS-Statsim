@@ -125,6 +125,7 @@ function runSingleTick(
     let numCrits = 0;
     let numStatuses = 0;
     let numSlashTicks = 0;
+    let numToxinTicks = 0;
 
     // Keep track of the damage we inflicted this tick
     let totalDamageInflictedThisTick = 0;
@@ -184,6 +185,8 @@ function runSingleTick(
                 proc.ticks -= 1;
                 // Update the time
                 proc.time = time;
+                // Count it
+                numToxinTicks += 1;
 
                 // Add it to the new list
                 newToxinProcs.push(proc);
@@ -297,6 +300,7 @@ function runSingleTick(
         numCrits: numCrits,
         numStatuses: numStatuses,
         numSlashTicks: numSlashTicks,
+        numToxinTicks: numToxinTicks,
     };
 }
 
@@ -329,6 +333,7 @@ export async function runPrimarySimulation(
     let numCrits = 0;
     let numStatuses = 0;
     let numSlashTicks = 0;
+    let numToxinTicks = 0;
 
     // Initialize the simulation with a null datapoint
     let previousData: SimDataPoint = {
@@ -355,6 +360,7 @@ export async function runPrimarySimulation(
         numCrits += output.numCrits;
         numStatuses += output.numStatuses;
         numSlashTicks += output.numSlashTicks;
+        numToxinTicks += output.numToxinTicks;
 
         // Propagate this tick's output data to the next tick
         previousData = output.data;
@@ -375,6 +381,7 @@ export async function runPrimarySimulation(
             effectiveStatusRate: (numStatuses / numShots) * 100.0,
             numStatusProcs: numStatuses,
             numSlashTicks: numSlashTicks,
+            numToxinTicks: numToxinTicks,
         },
     };
 }

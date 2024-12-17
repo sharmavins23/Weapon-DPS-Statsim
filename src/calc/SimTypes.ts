@@ -29,6 +29,7 @@ export interface SimMetadata {
     effectiveStatusRate: number; // Effective status proc rate
     numStatusProcs: number; // Number of status procs
     numSlashTicks: number; // Number of ticks from slash procs
+    numToxinTicks: number; // Number of ticks from toxin procs
 }
 
 // Overall output from the sim. Consumed by front-end.
@@ -70,6 +71,7 @@ export interface ISimOutput {
 
     numStatuses: number;
     numSlashTicks: number;
+    numToxinTicks: number;
 }
 
 export interface iSingleBulletDamageOutput {
