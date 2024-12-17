@@ -245,10 +245,10 @@ function runSingleTick(
     };
 }
 
-export function runPrimarySimulation(
+export async function runPrimarySimulation(
     weapon: PrimaryWeapon,
     input: SimInput,
-): SimOutput {
+): Promise<SimOutput> {
     let numTicks: number = input.simulationTime / input.timeResolution;
 
     // Prepare our objects for the simulation

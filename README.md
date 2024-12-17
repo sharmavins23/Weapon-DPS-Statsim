@@ -28,8 +28,6 @@ wonderful front-end.
 ## Web UI
 
 - Break up `page.tsx` to multiple files - Way too long!
-- Update the button with a loading spinner and darken the graph when loading the
-  simulation
 
 ## Features
 

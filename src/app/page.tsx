@@ -1,6 +1,6 @@
 "use client";
 
-import { runPrimarySimulation } from "@/calc/Primary";
+import { SimOutput, runPrimarySimulation } from "@/calc/Primary";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -37,18 +37,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { HomeIcon, Moon, RefreshCw, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { z } from "zod";
 
 const formSchema = z.object({
     simulationTime: z.coerce.number().min(1).max(1_000),
-    timeResolution: z.coerce.number().min(0.0001).max(1),
+    timeResolution: z.coerce.number().min(0.000_1).max(1),
 });
 
 export default function Home() {
     const { theme, setTheme } = useTheme();
+
+    // Loading the simulation
     const [isLoadingSim, setIsLoadingSim] = useState(false);
 
     // Form data
@@ -58,12 +60,8 @@ export default function Home() {
     });
 
     // Chart data
-    const [simOutput, setSimOutput] = useState(
-        runPrimarySimulation(Braton, {
-            simulationTime: 10,
-            timeResolution: 0.01,
-        }),
-    );
+    const [simOutput, setSimOutput] = useState<SimOutput | null>(null);
+
     const chartConfig = {
         damage: {
             label: "TickDamage",
@@ -85,8 +83,7 @@ export default function Home() {
     });
 
     // On submission of the form...
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values);
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         // Update the form data
         setFormData({
             simulationTime: values.simulationTime,
@@ -94,20 +91,18 @@ export default function Home() {
         });
     }
 
-    // On button press...
-    function onSubmitButton() {
+    useEffect(() => {
         setIsLoadingSim(true);
-
-        // Re-run the simulation
-        setSimOutput(
-            runPrimarySimulation(Braton, {
-                simulationTime: formData.simulationTime,
-                timeResolution: formData.timeResolution,
-            }),
-        );
-
-        setIsLoadingSim(false);
-    }
+        setTimeout(async () => {
+            setSimOutput(
+                await runPrimarySimulation(Braton, {
+                    simulationTime: formData.simulationTime,
+                    timeResolution: formData.timeResolution,
+                }),
+            );
+            setIsLoadingSim(false);
+        }, 0);
+    }, [formData]);
 
     return (
         <div>
@@ -271,23 +266,22 @@ export default function Home() {
                                         <CardDescription>
                                             Simulation run over{" "}
                                             <b>
-                                                {
-                                                    simOutput.metadata
-                                                        .simulationTime
-                                                }{" "}
+                                                {simOutput
+                                                    ? simOutput.metadata
+                                                          .simulationTime
+                                                    : 0}{" "}
                                             </b>
                                             seconds, with{" "}
                                             <b>
-                                                {
-                                                    simOutput.metadata
-                                                        .timeResolution
-                                                }{" "}
+                                                {simOutput
+                                                    ? simOutput.metadata
+                                                          .timeResolution
+                                                    : 0}{" "}
                                             </b>{" "}
                                             seconds between ticks
                                         </CardDescription>
                                         <Button
                                             type="submit"
-                                            onClick={onSubmitButton}
                                             disabled={isLoadingSim}
                                         >
                                             {isLoadingSim ? (
@@ -305,7 +299,9 @@ export default function Home() {
                                     <ChartContainer config={chartConfig}>
                                         <LineChart
                                             accessibilityLayer
-                                            data={simOutput.data}
+                                            data={
+                                                simOutput ? simOutput.data : []
+                                            }
                                             margin={{
                                                 top: 24,
                                                 left: 24,
@@ -361,7 +357,10 @@ export default function Home() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>
-                                        {simOutput.metadata.DPS.toFixed(3)} DPS
+                                        {simOutput
+                                            ? simOutput.metadata.DPS.toFixed(3)
+                                            : 0.0}{" "}
+                                        DPS
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -373,9 +372,11 @@ export default function Home() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>
-                                        {simOutput.metadata.damagePerShot.toFixed(
-                                            3,
-                                        )}{" "}
+                                        {simOutput
+                                            ? simOutput.metadata.damagePerShot.toFixed(
+                                                  3,
+                                              )
+                                            : 0.0}{" "}
                                         damage
                                     </CardTitle>
                                 </CardHeader>
@@ -388,9 +389,11 @@ export default function Home() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>
-                                        {simOutput.metadata.effectiveCritRate.toFixed(
-                                            3,
-                                        )}
+                                        {simOutput
+                                            ? simOutput.metadata.effectiveCritRate.toFixed(
+                                                  3,
+                                              )
+                                            : 0.0}
                                         %
                                     </CardTitle>
                                 </CardHeader>
