@@ -16,12 +16,6 @@ import {
     ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
     Form,
     FormControl,
     FormDescription,
@@ -54,7 +48,8 @@ const formSchema = z.object({
 });
 
 export default function Home() {
-    const { setTheme } = useTheme();
+    const { theme, setTheme } = useTheme();
+    const [isLoadingSim, setIsLoadingSim] = useState(false);
 
     // Form data
     const [formData, setFormData] = useState({
@@ -101,6 +96,8 @@ export default function Home() {
 
     // On button press...
     function onSubmitButton() {
+        setIsLoadingSim(true);
+
         // Re-run the simulation
         setSimOutput(
             runPrimarySimulation(Braton, {
@@ -108,6 +105,8 @@ export default function Home() {
                 timeResolution: formData.timeResolution,
             }),
         );
+
+        setIsLoadingSim(false);
     }
 
     return (
@@ -116,28 +115,17 @@ export default function Home() {
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                 <div className="flex items-center gap-2 px-4">
                     <b>Warframe DPS StatSim</b>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon">
-                                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                                <span className="sr-only">Toggle theme</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setTheme("light")}>
-                                Light
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("dark")}>
-                                Dark
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => setTheme("system")}
-                            >
-                                System
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() =>
+                            setTheme(theme === "dark" ? "light" : "dark")
+                        }
+                    >
+                        <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                        <span className="sr-only">Toggle theme</span>
+                    </Button>
                     <NavigationMenu>
                         <NavigationMenuList>
                             <NavigationMenuItem>
@@ -161,7 +149,14 @@ export default function Home() {
                 <Card>
                     <CardHeader>
                         <CardTitle>
-                            Warframe DPS Stat(istics) Sim(ulator)
+                            Warframe DPS Stat
+                            <span className="text-muted-foreground">
+                                (istics)
+                            </span>{" "}
+                            Sim
+                            <span className="text-muted-foreground">
+                                (ulator)
+                            </span>
                         </CardTitle>
                         <CardDescription>
                             A fully featured DPS (and status effect!) simulator
@@ -293,9 +288,16 @@ export default function Home() {
                                         <Button
                                             type="submit"
                                             onClick={onSubmitButton}
+                                            disabled={isLoadingSim}
                                         >
-                                            <RefreshCw className="h-4 w-4" />
-                                            Re-run simulation
+                                            {isLoadingSim ? (
+                                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <RefreshCw className="h-4 w-4" />
+                                            )}
+                                            {isLoadingSim
+                                                ? "Simulating..."
+                                                : "Run simulation"}
                                         </Button>
                                     </CardHeader>
                                 </div>
@@ -352,7 +354,7 @@ export default function Home() {
                 {/* SimFax */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Simulator metadata</CardTitle>
+                        <CardTitle>Simulation stats</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
@@ -365,6 +367,36 @@ export default function Home() {
                                 <CardContent>
                                     <CardDescription>
                                         Damage per second (averaged)
+                                    </CardDescription>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        {simOutput.metadata.damagePerShot.toFixed(
+                                            3,
+                                        )}{" "}
+                                        damage
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <CardDescription>
+                                        Damage per shot (averaged)
+                                    </CardDescription>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        {simOutput.metadata.effectiveCritRate.toFixed(
+                                            3,
+                                        )}
+                                        %
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <CardDescription>
+                                        Effective critical hit rate
                                     </CardDescription>
                                 </CardContent>
                             </Card>

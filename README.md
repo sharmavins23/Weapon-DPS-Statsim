@@ -27,15 +27,18 @@ wonderful front-end.
 
 ## Web UI
 
-- Change light/dark mode button to toggle
-- (Nit) soften the color of the text in parentheses in the title
 - Break up `page.tsx` to multiple files - Way too long!
 - Update the button with a loading spinner and darken the graph when loading the
   simulation
 
 ## Features
 
-- Implement simulator
+- Add in status effect handling (and simulation!)
+- Add enemies and armor/health scaling for enemies
+- Add mods
+- Add arcanes
+- Add incarnons
+- Add other weapons (secondaries, melee)
 - Separate graphing for "true damage" vs "attenuated damage", or maybe even some
   other outputs? "Unmodified damage"?
 

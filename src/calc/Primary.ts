@@ -21,6 +21,8 @@ export interface SimMetadata {
     timeResolution: number; // Seconds per tick
 
     DPS: number; // Damage per second
+    damagePerShot: number; // Average damage per shot
+    effectiveCritRate: number; // Effective critical hit rate
 }
 
 // Overall output from the sim. Consumed by front-end.
@@ -47,11 +49,22 @@ interface ISimStack {
 interface ISimOutput {
     data: SimDataPoint;
     stack: ISimStack;
+
+    isShot: boolean;
+    isCrit: boolean;
+}
+
+interface iSingleBulletDamageOutput {
+    damage: number;
+
+    isCrit: boolean;
 }
 
 // ===== Damage calculation ====================================================
 
-function calculateSingleBulletDamage(weapon: PrimaryWeapon): number {
+function calculateSingleBulletDamage(
+    weapon: PrimaryWeapon,
+): iSingleBulletDamageOutput {
     // * Compute quantization factor (scale)
     let baseIPS =
         weapon.damage.impact + weapon.damage.puncture + weapon.damage.slash;
@@ -142,7 +155,10 @@ function calculateSingleBulletDamage(weapon: PrimaryWeapon): number {
         1.0,
     );
 
-    return totalDamage;
+    return {
+        damage: totalDamage,
+        isCrit: quantizedCriticalMultiplier > 1.0,
+    };
 }
 
 // ===== Simulation functions ==================================================
@@ -155,6 +171,10 @@ function runSingleTick(
     stack: ISimStack,
 ): ISimOutput {
     let newStack = { ...stack };
+
+    // Flags for tracking
+    let isShot = false;
+    let isCrit = false;
 
     // Keep track of the damage we inflicted this tick
     let totalDamageInflictedThisTick = 0;
@@ -198,8 +218,12 @@ function runSingleTick(
 
         // Increase the damage dealt
         let singleBulletDamage = calculateSingleBulletDamage(weapon);
-        let totalShotDamage = singleBulletDamage * weapon.multishot;
+        let totalShotDamage = singleBulletDamage.damage * weapon.multishot;
         totalDamageInflictedThisTick += totalShotDamage;
+
+        // Update some counters
+        isShot = true;
+        isCrit = singleBulletDamage.isCrit;
     }
 
     // Handle any other weird edge cases
@@ -216,6 +240,8 @@ function runSingleTick(
             cumulative: previous.cumulative + totalDamageInflictedThisTick,
         },
         stack: newStack,
+        isShot: isShot,
+        isCrit: isCrit,
     };
 }
 
@@ -227,6 +253,7 @@ export function runPrimarySimulation(
 
     // Prepare our objects for the simulation
     let data: SimDataPoint[] = [];
+    let stacks: ISimStack[] = [];
     let params: ISimParams = {};
     let stack: ISimStack = {
         isReloading: false,
@@ -237,6 +264,10 @@ export function runPrimarySimulation(
 
         ammoInMagazine: weapon.ammo.magazineSize,
     };
+
+    // Prepare our counters for metadata
+    let numShots = 0;
+    let numCrits = 0;
 
     // Initialize the simulation with a null datapoint
     let previousData: SimDataPoint = {
@@ -255,7 +286,18 @@ export function runPrimarySimulation(
             params,
             stack,
         );
+        // Save the datapoint
         data.push(output.data);
+        // Save the stack
+        stacks.push(stack);
+
+        // Update some counters that we use
+        if (output.isShot) {
+            numShots += 1;
+        }
+        if (output.isCrit) {
+            numCrits += 1;
+        }
 
         // Propagate this tick's output data to the next tick
         previousData = output.data;
@@ -271,6 +313,8 @@ export function runPrimarySimulation(
             timeResolution: input.timeResolution,
 
             DPS: data[data.length - 1].cumulative / input.simulationTime,
+            damagePerShot: data[data.length - 1].cumulative / numShots,
+            effectiveCritRate: (numCrits / numShots) * 100.0,
         },
     };
 }
